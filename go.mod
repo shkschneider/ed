@@ -10,6 +10,7 @@ require (
 	github.com/pgavlin/femto v0.0.0-20201224065653-0c9d20f9cac4
 	github.com/rivo/tview v0.0.0-20250625164341-a4a78f1e05cb
 	github.com/sblinch/kdl-go v0.0.0-20240410000746-21754ba9ac55
+	golang.org/x/term v0.32.0
 )
 
 require (
@@ -23,7 +24,6 @@ require (
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/zyedidia/micro v1.4.1 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
