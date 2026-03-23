@@ -11,12 +11,12 @@ import (
 )
 
 type Window struct {
-	root          tv.Primitive
-	Header        *tv.TextView
-	Content       *femto.View
-	buffer        *femto.Buffer
-	FooterStatus  *tv.TextView
-	FooterCommand *tv.InputField
+	root              tv.Primitive
+	Header            *tv.TextView
+	Content           *femto.View
+	buffer            *femto.Buffer
+	FooterStatus      *tv.TextView
+	FooterCommandLine *tv.InputField
 }
 
 func newHeaderView() *tv.TextView {
@@ -41,12 +41,13 @@ func newFooterStatusView() *tv.TextView {
 	return view
 }
 
-func newFooterCommandView() *tv.InputField {
+func newFooterCommandLineView() *tv.InputField {
 	view := tv.NewInputField()
 	view.SetPlaceholder("Type command...")
 	view.SetLabel("")
 	view.SetFieldTextColor(tc.GetColor("white"))
 	view.SetPlaceholderTextColor(tc.GetColor("gray"))
+	view.SetFieldBackgroundColor(tc.ColorBlack)
 	return view
 }
 
@@ -54,7 +55,7 @@ func NewWindow(buffer *Buffer) *Window {
 	header := newHeaderView()
 	content := newContentView(buffer)
 	footer_status := newFooterStatusView()
-	footer_command := newFooterCommandView()
+	footer_command := newFooterCommandLineView()
 	content.SetRuntimeFiles(runtime.Files)
 	if cs := runtime.Files.FindFile(femto.RTColorscheme, "monokai"); cs != nil {
 		if data, err := cs.Data(); err == nil {
@@ -68,11 +69,11 @@ func NewWindow(buffer *Buffer) *Window {
 			AddItem(content, 1, 0, 1, 1, 0, 0, true).
 			AddItem(footer_status, 2, 0, 1, 1, 1, 0, false).
 			AddItem(footer_command, 3, 0, 1, 1, 1, 0, false),
-		Header:        header,
-		Content:       content,
-		buffer:        buffer,
-		FooterStatus:  footer_status,
-		FooterCommand: footer_command,
+		Header:            header,
+		Content:           content,
+		buffer:            buffer,
+		FooterStatus:      footer_status,
+		FooterCommandLine: footer_command,
 	}
 	footer_command.SetDoneFunc(func(key tc.Key) {
 		if key == tc.KeyEnter {
@@ -99,17 +100,17 @@ func (this *Window) Update() {
 }
 
 func (this *Window) FocusMinibuffer() {
-	app.SetFocus(this.FooterCommand)
+	app.SetFocus(this.FooterCommandLine)
 }
 
 func (this *Window) MinibufferText() string {
-	return this.FooterCommand.GetText()
+	return this.FooterCommandLine.GetText()
 }
 
 func (this *Window) SetMinibufferText(text string) {
-	this.FooterCommand.SetText(text)
+	this.FooterCommandLine.SetText(text)
 }
 
 func (this *Window) ClearMinibuffer() {
-	this.FooterCommand.SetText("")
+	this.FooterCommandLine.SetText("")
 }

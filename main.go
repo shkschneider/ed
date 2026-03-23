@@ -18,6 +18,9 @@ var (
 )
 
 func main() {
+	// styles
+	tv.Styles.ContrastBackgroundColor = tc.ColorBlack
+	tv.Styles.PrimitiveBackgroundColor = tc.ColorBlack
 	// logger
 	f, err := os.Create(fmt.Sprintf("/tmp/%s.log", NAME))
 	if err == nil {

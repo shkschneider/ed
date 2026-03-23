@@ -2,41 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 
 	tv "github.com/rivo/tview"
 )
-
-func Explorer(path string, cb func(int, string, string, rune)) (*tv.List, error) {
-	list := tv.NewList()
-	list.SetHighlightFullLine(false)
-	list.ShowSecondaryText(false)
-	list.SetWrapAround(true)
-	if files, err := find(path); err != nil {
-		return nil, err
-	} else {
-		for i, file := range files[1:] {
-			list.AddItem(strings.Replace(file, path+string(os.PathSeparator), "", 1), file, rune('a'+i), nil)
-		}
-	}
-	list.SetSelectedFunc(cb)
-	return list, nil
-}
-
-func find(path string) ([]string, error) {
-	var files []string = make([]string, 1)
-	err := filepath.WalkDir(path, func(path string, dir fs.DirEntry, err error) error {
-		if !dir.IsDir() && dir.Type().IsRegular() {
-			log.Debug(fmt.Sprintf("[%s] %s\n", dir.Name(), path))
-			files = append(files, path)
-		}
-		return err
-	})
-	return files, err
-}
 
 func Open(pages *tv.Pages, paths []string) error {
 	switch len(paths) {
@@ -97,6 +67,7 @@ func openFile(pages *tv.Pages, path string) error {
 	}
 	window := NewWindow(buffer)
 	window.SetKeyBindings(NewKeyBindings())
+	window.Update()
 	file := filepath.Base(buffer.Path)
 	pages.AddAndSwitchToPage(file, window.root, true)
 	AddWindow(file, window)
@@ -105,10 +76,10 @@ func openFile(pages *tv.Pages, path string) error {
 }
 
 func openDirectory(pages *tv.Pages, path string) error {
-	list, err := Explorer(path, func(index int, primary string, secondary string, shortcut rune) {
-		log.Debug(fmt.Sprintf("openDirectory %d %s %s", index, primary, secondary))
-		if buffer, err := NewBufferFromFile(secondary); err != nil {
-			log.Fatal(fmt.Sprintf("NewBufferFromFile(%s)", secondary), err)
+	explorer := NewFuzzyExplorer(path, func(selected string) {
+		log.Debug(fmt.Sprintf("openDirectory %s", selected))
+		if buffer, err := NewBufferFromFile(selected); err != nil {
+			log.Fatal(fmt.Sprintf("NewBufferFromFile(%s)", selected), err)
 		} else {
 			window := NewWindow(buffer)
 			window.SetKeyBindings(NewKeyBindings())
@@ -118,9 +89,7 @@ func openDirectory(pages *tv.Pages, path string) error {
 			SetCurrentPage(file)
 		}
 	})
-	if err != nil {
-		return err
-	}
-	pages.AddAndSwitchToPage("explorer", list, true)
+	pages.AddAndSwitchToPage("explorer", explorer.Root(), true)
+	explorer.Focus()
 	return nil
 }
