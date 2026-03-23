@@ -11,12 +11,12 @@ import (
 )
 
 type Window struct {
-	root			tv.Primitive
-	Header			*tv.TextView
-	Content			*femto.View
-	buffer			*femto.Buffer
-	FooterStatus	*tv.TextView
-	FooterCommand	*tv.TextView
+	root          tv.Primitive
+	Header        *tv.TextView
+	Content       *femto.View
+	buffer        *femto.Buffer
+	FooterStatus  *tv.TextView
+	FooterCommand *tv.InputField
 }
 
 func newHeaderView() *tv.TextView {
@@ -41,23 +41,13 @@ func newFooterStatusView() *tv.TextView {
 	return view
 }
 
-func newFooterCommandView() *tv.TextView {
-	view := tv.NewTextView()
-	view.SetText("command")
-	view.SetTextColor(tc.GetColor("white"))
-	view.SetBackgroundColor(tc.GetColor("black"))
+func newFooterCommandView() *tv.InputField {
+	view := tv.NewInputField()
+	view.SetPlaceholder("Type command...")
+	view.SetLabel("")
+	view.SetFieldTextColor(tc.GetColor("white"))
+	view.SetPlaceholderTextColor(tc.GetColor("gray"))
 	return view
-	// view := tv.NewInputField()
-	// view.SetLabel("command:")
-	// view.SetPlaceholder("...")
-	// view.SetFieldTextColor(tc.GetColor("white"))
-	// view.SetFieldBackgroundColor(tc.GetColor("black"))
-	// //view.SetFocus(false)
-	// view.SetDisabled(false)
-	// view.SetDoneFunc(func(key tc.Key) {
-	// 	log.Debug(key)
-	// })
-	// return view
 }
 
 func NewWindow(buffer *Buffer) *Window {
@@ -71,19 +61,31 @@ func NewWindow(buffer *Buffer) *Window {
 			content.SetColorscheme(femto.ParseColorscheme(string(data)))
 		}
 	}
-	return &Window {
+	win := &Window{
 		root: tv.NewGrid().SetRows(1, 0, 1, 1).SetBorders(false).
 			//     (...,            row, column, rowSpan, colSpan, minGridHeight, minGridWidth int, focus bool)
-			AddItem(header,         0,   0,      1,       1,       1,             0,                false).
-			AddItem(content,        1,   0,      1,       1,       0,             0,                true).
-			AddItem(footer_status,  2,   0,      1,       1,       1,             0,                false).
-			AddItem(footer_command, 3,   0,      1,       1,       1,             0,                false),
-		Header: header,
-		Content: content,
-		buffer: buffer,
-		FooterStatus: footer_status,
+			AddItem(header, 0, 0, 1, 1, 1, 0, false).
+			AddItem(content, 1, 0, 1, 1, 0, 0, true).
+			AddItem(footer_status, 2, 0, 1, 1, 1, 0, false).
+			AddItem(footer_command, 3, 0, 1, 1, 1, 0, false),
+		Header:        header,
+		Content:       content,
+		buffer:        buffer,
+		FooterStatus:  footer_status,
 		FooterCommand: footer_command,
 	}
+	footer_command.SetDoneFunc(func(key tc.Key) {
+		if key == tc.KeyEnter {
+			text := footer_command.GetText()
+			if text != "" {
+				Run(text)
+			}
+			footer_command.SetText("")
+		}
+		app.SetFocus(content)
+		SetMinibufferActive(false)
+	})
+	return win
 }
 
 func (this *Window) SetKeyBindings(bindings femto.KeyBindings) {
@@ -94,4 +96,20 @@ func (this *Window) Update() {
 	this.Header.SetText(fmt.Sprintf("[%s]", filepath.Base(this.buffer.Path)))
 	position := fmt.Sprintf("%d:%d/%d", this.buffer.Cursor.Loc.X, this.buffer.Cursor.Loc.Y, this.buffer.NumLines)
 	this.FooterStatus.SetText(fmt.Sprintf("[%s] %s (%s)", this.buffer.FileType(), this.buffer.Path, position))
+}
+
+func (this *Window) FocusMinibuffer() {
+	app.SetFocus(this.FooterCommand)
+}
+
+func (this *Window) MinibufferText() string {
+	return this.FooterCommand.GetText()
+}
+
+func (this *Window) SetMinibufferText(text string) {
+	this.FooterCommand.SetText(text)
+}
+
+func (this *Window) ClearMinibuffer() {
+	this.FooterCommand.SetText("")
 }

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"os"
 	// "io/ioutil"
 	// "path/filepath"
 
@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	ID = "github.com/shkschneider/ed"
-	NAME = "ed"
+	ID         = "github.com/shkschneider/ed"
+	NAME       = "ed"
 	VERSION, _ = semver.NewVersion("0.1.1")
 )
 
@@ -29,13 +29,17 @@ func main() {
 	log.Info(fmt.Sprintf("%s %s %s", ID, NAME, VERSION.String()))
 	// config
 	conf, err := NewConfig(fmt.Sprintf(NAME, ".kdl"))
-	if err != nil { log.Error("NewConfig()", err) }
+	if err != nil {
+		log.Error("NewConfig()", err)
+	}
 	log.Debug(conf)
 	// application
 	app := tv.NewApplication()
 	app.SetTitle(NAME)
+	SetApp(app)
 	// ui
 	ui := tv.NewPages()
+	SetUI(ui)
 	// ...
 	Open(ui, os.Args)
 
@@ -52,10 +56,24 @@ func main() {
 	// 	win.Update(buffer)
 	// }))
 	app.SetInputCapture(func(event *tc.EventKey) *tc.EventKey {
-		log.Debug(fmt.Sprintf("Name: %s", event.Name()))
-		switch event.Key() {
-		case tc.KeyUp: log.Debug("KeyUp")
+		if event.Key() == tc.KeyCtrlSpace {
+			win := GetCurrentWindow()
+			if win != nil {
+				win.FocusMinibuffer()
+				SetMinibufferActive(true)
+			}
+			return nil
 		}
+		if IsMinibufferActive() && event.Key() == tc.KeyEsc {
+			win := GetCurrentWindow()
+			if win != nil {
+				win.ClearMinibuffer()
+				app.SetFocus(win.Content)
+			}
+			SetMinibufferActive(false)
+			return nil
+		}
+		log.Debug(fmt.Sprintf("Name: %s", event.Name()))
 		return event
 	})
 	// ioutil.WriteFile(os.Args[1], []byte(buffer.String()), 0644)
@@ -110,7 +128,7 @@ func main() {
 
 	// run
 	app.SetRoot(ui, true)
-	if err := app.Run() ; err != nil {
+	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

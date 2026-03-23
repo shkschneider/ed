@@ -52,5 +52,5 @@ func newKdlConfig(path string) (*Config, error) {
 		config.Name = NAME
 		config.Version = VERSION.String()
 	}
-    return config, nil
+	return config, nil
 }
